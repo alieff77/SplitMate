@@ -4,12 +4,17 @@ import 'package:splitmate/models/group_model.dart';
 import 'package:splitmate/models/message_model.dart';
 import 'package:splitmate/services/bill_service.dart';
 import 'package:splitmate/services/group_service.dart';
+import 'package:splitmate/services/user_service.dart';
 import 'package:splitmate/controllers/auth_controller.dart';
 import 'package:splitmate/core/utils/settlement_optimizer.dart';
 
 class GroupDetailController extends GetxController {
   final GroupService _groupService = GroupService();
   final BillService _billService = BillService();
+  final UserService _userService = UserService();
+
+  final RxBool isAddingMember = false.obs;
+  final RxString addMemberError = ''.obs;
 
   final Rx<GroupModel?> group = Rx<GroupModel?>(null);
   final RxList<BillModel> bills = <BillModel>[].obs;
@@ -86,6 +91,34 @@ class GroupDetailController extends GetxController {
         .toList();
 
     settlements.value = SettlementOptimizer.compute(balanceList);
+  }
+
+  Future<bool> addMemberByPhone(String phone) async {
+    isAddingMember.value = true;
+    addMemberError.value = '';
+    try {
+      final member = await _userService.getUserByPhone(phone);
+      if (member == null) {
+        addMemberError.value = 'No user found with that phone number.';
+        return false;
+      }
+      if (group.value?.memberIds.contains(member.id) == true) {
+        addMemberError.value = 'That person is already in this group.';
+        return false;
+      }
+      await _groupService.addMember(
+        groupId: groupId,
+        userId: member.id,
+        userName: member.name,
+      );
+      await _userService.addGroupToUser(member.id, groupId);
+      return true;
+    } catch (e) {
+      addMemberError.value = e.toString();
+      return false;
+    } finally {
+      isAddingMember.value = false;
+    }
   }
 
   double get myNetBalance => memberNetBalances[_auth.userId] ?? 0;

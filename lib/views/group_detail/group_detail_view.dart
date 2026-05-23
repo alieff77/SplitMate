@@ -57,7 +57,9 @@ class GroupDetailView extends StatelessWidget {
 
   void _showAddMemberDialog(
       BuildContext context, GroupDetailController ctrl) {
-    final idCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+    ctrl.addMemberError.value = '';
+
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -68,34 +70,55 @@ class GroupDetailView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Enter the member\'s User ID:',
+            const Text('Enter their registered phone number:',
                 style:
                     TextStyle(fontSize: 13, color: AppColors.textSecondary)),
             const SizedBox(height: 12),
             TextField(
-              controller: idCtrl,
+              controller: phoneCtrl,
               autofocus: true,
+              keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
-                hintText: 'User ID',
-                prefixIcon: Icon(Icons.person_outline),
+                hintText: '01X-XXXXXXXX',
+                prefixIcon: Icon(Icons.phone_outlined),
               ),
             ),
+            Obx(() {
+              if (ctrl.addMemberError.value.isEmpty) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: Text(ctrl.addMemberError.value,
+                    style: const TextStyle(
+                        color: AppColors.danger, fontSize: 12)),
+              );
+            }),
           ],
         ),
         actions: [
           TextButton(
               onPressed: () => Get.back(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () {
-              if (idCtrl.text.trim().isNotEmpty) {
-                Get.find<GroupDetailController>();
-                Get.back();
-                Get.snackbar('Adding member...', '',
-                    duration: const Duration(seconds: 1));
-              }
-            },
-            child: const Text('Add'),
-          ),
+          Obx(() => ElevatedButton(
+                onPressed: ctrl.isAddingMember.value
+                    ? null
+                    : () async {
+                        if (phoneCtrl.text.trim().isEmpty) return;
+                        final ok = await ctrl
+                            .addMemberByPhone(phoneCtrl.text.trim());
+                        if (ok) {
+                          Get.back();
+                          Get.snackbar('Member added', '',
+                              duration: const Duration(seconds: 2));
+                        }
+                      },
+                child: ctrl.isAddingMember.value
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Add'),
+              )),
         ],
       ),
     );
