@@ -86,7 +86,7 @@ class ChatController extends GetxController {
         userId: 'assistant',
         userName: 'SplitMate AI',
         role: 'assistant',
-        content: 'Sorry, I ran into an error. Please try again.',
+        content: 'Error: ${e.toString()}',
       );
     } finally {
       isAiTyping.value = false;

@@ -53,10 +53,78 @@ class GroupsView extends StatelessWidget {
                 itemBuilder: (_, i) {
                   final group = controller.groups[i];
                   final balance = controller.groupBalances[group.id] ?? 0;
-                  return GroupCardWidget(
-                    group: group,
-                    netBalance: balance,
-                    onTap: () => controller.goToGroup(group.id),
+                  return Dismissible(
+                    key: Key(group.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 24),
+                      child: const Icon(Icons.delete_outline,
+                          color: Colors.white, size: 28),
+                    ),
+                    confirmDismiss: (_) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          title: const Text('Delete Group?'),
+                          content: Text(
+                              'Delete "${group.name}"? This cannot be undone.'),
+                          actions: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () => Get.back(result: false),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.textSecondary,
+                                      side: const BorderSide(
+                                          color: AppColors.border),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () => Get.back(result: true),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.danger,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                    ),
+                                    child: const Text('Delete',
+                                        style:
+                                            TextStyle(color: Colors.white)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    onDismissed: (_) => controller.deleteGroup(group.id),
+                    child: GroupCardWidget(
+                      group: group,
+                      netBalance: balance,
+                      onTap: () => controller.goToGroup(group.id),
+                    ),
                   );
                 },
               ),

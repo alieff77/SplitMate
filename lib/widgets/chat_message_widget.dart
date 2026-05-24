@@ -17,20 +17,28 @@ class ChatMessageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAssistant = message.role == 'assistant';
+    final showLeftAvatar = !isMe;
+    final initial = isAssistant
+        ? 'AI'
+        : message.userName.isNotEmpty
+            ? message.userName[0].toUpperCase()
+            : '?';
+    final avatarColor =
+        isAssistant ? AppColors.primary : const Color(0xFF9E9E9E);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         mainAxisAlignment:
             isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
-          if (isAssistant) ...[
+          if (showLeftAvatar) ...[
             CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.primary,
-              child: const Text('AI',
-                  style: TextStyle(
+              backgroundColor: avatarColor,
+              child: Text(initial,
+                  style: const TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.white)),
@@ -42,12 +50,14 @@ class ChatMessageWidget extends StatelessWidget {
               crossAxisAlignment:
                   isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                if (!isMe && !isAssistant)
+                if (!isMe)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 2, left: 4),
-                    child: Text(message.userName,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppColors.textSecondary)),
+                    child: Text(
+                      isAssistant ? 'SplitMate AI' : message.userName,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.textSecondary),
+                    ),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -66,7 +76,7 @@ class ChatMessageWidget extends StatelessWidget {
                     ),
                     border: isAssistant
                         ? Border.all(color: AppColors.successLight)
-                        : null,
+                        : Border.all(color: const Color(0xFFE0E0E0)),
                   ),
                   child: Text(
                     message.content,

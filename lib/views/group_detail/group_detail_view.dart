@@ -7,51 +7,72 @@ import 'package:splitmate/views/group_detail/tabs/balance_tab.dart';
 import 'package:splitmate/views/group_detail/tabs/bills_tab.dart';
 import 'package:splitmate/views/group_detail/tabs/chat_tab.dart';
 
-class GroupDetailView extends StatelessWidget {
+class GroupDetailView extends StatefulWidget {
   const GroupDetailView({super.key});
+
+  @override
+  State<GroupDetailView> createState() => _GroupDetailViewState();
+}
+
+class _GroupDetailViewState extends State<GroupDetailView>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<GroupDetailController>();
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Obx(() =>
-              Text(ctrl.group.value?.name ?? 'Group')),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.group_add_outlined),
-              tooltip: 'Add member',
-              onPressed: () => _showAddMemberDialog(context, ctrl),
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Obx(() => Text(ctrl.group.value?.name ?? 'Group')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.group_add_outlined),
+            tooltip: 'Add member',
+            onPressed: () => _showAddMemberDialog(context, ctrl),
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Bills'),
+            Tab(text: 'Balance'),
+            Tab(text: 'Chat'),
           ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(text: 'Bills'),
-              Tab(text: 'Balance'),
-              Tab(text: 'Chat'),
-            ],
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.textSecondary,
-            indicatorColor: AppColors.primary,
-          ),
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: AppColors.primary,
         ),
-        body: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: const TabBarView(
-              children: [
-                BillsTab(),
-                BalanceTab(),
-                ChatTab(),
-              ],
-            ),
-          ),
-        ),
-        floatingActionButton: _AddBillFab(groupId: ctrl.groupId),
       ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: TabBarView(
+            controller: _tabController,
+            children: const [
+              BillsTab(),
+              BalanceTab(),
+              ChatTab(),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: _tabController.index == 0
+          ? _AddBillFab(groupId: ctrl.groupId)
+          : null,
     );
   }
 

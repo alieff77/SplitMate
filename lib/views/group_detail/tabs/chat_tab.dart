@@ -95,6 +95,20 @@ class _ChatTabState extends State<ChatTab> {
         Expanded(
           child: Obx(() {
             final messages = _chat.messages;
+
+            if (messages.isEmpty && !_chat.isAiTyping.value) {
+              return ListView(
+                controller: _scrollCtrl,
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
+                children: [
+                  _DummyBubble(isMe: true, text: 'semalam makan McD, aku bayar RM45'),
+                  _DummyBubble(isMe: false, text: 'Ok! I\'ve parsed your McD bill. Total RM45, paid by you. Should I create this bill for your group?'),
+                  _DummyBubble(isMe: true, text: 'yes'),
+                  _DummyBubble(isMe: false, text: '✅ Done! Bill \'McD Malam Malam\' saved for RM45. Everyone in MCD can see it in the Bills tab.'),
+                ],
+              );
+            }
+
             return ListView.builder(
               controller: _scrollCtrl,
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -216,6 +230,66 @@ class _ChatTabState extends State<ChatTab> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DummyBubble extends StatelessWidget {
+  final bool isMe;
+  final String text;
+  const _DummyBubble({required this.isMe, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment:
+            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isMe) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary,
+              child: const Text('AI',
+                  style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white)),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isMe
+                    ? AppColors.primary
+                    : const Color(0xFFf0fdf4),
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(16),
+                  topRight: const Radius.circular(16),
+                  bottomLeft: Radius.circular(isMe ? 16 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 16),
+                ),
+                border: !isMe
+                    ? Border.all(color: AppColors.successLight)
+                    : null,
+              ),
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isMe ? Colors.white : AppColors.textPrimary,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

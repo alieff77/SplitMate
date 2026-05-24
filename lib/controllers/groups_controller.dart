@@ -98,6 +98,10 @@ class GroupsController extends GetxController {
     await _userService.addGroupToUser(memberId, groupId);
   }
 
+  Future<void> deleteGroup(String groupId) async {
+    await _groupService.deleteGroup(groupId);
+  }
+
   Future<void> reloadBalances() => _loadBalances(groups);
 
   void goToGroup(String groupId) {

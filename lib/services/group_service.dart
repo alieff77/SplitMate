@@ -46,6 +46,10 @@ class GroupService {
     });
   }
 
+  Future<void> deleteGroup(String groupId) async {
+    await _db.collection('groups').doc(groupId).delete();
+  }
+
   Stream<List<GroupModel>> watchUserGroups(String userId) {
     return _db
         .collection('groups')

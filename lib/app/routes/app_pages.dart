@@ -34,18 +34,25 @@ class AppPages {
       name: AppRoutes.groupDetail,
       page: () => const GroupDetailView(),
       binding: BindingsBuilder(() {
-        Get.lazyPut(() => GroupDetailController());
-        Get.lazyPut(() => BillController());
-        Get.lazyPut(() => ChatController());
+        Get.lazyPut(() => GroupDetailController(), fenix: true);
+        Get.lazyPut(() => BillController(), fenix: true);
+        Get.lazyPut(() => ChatController(), fenix: true);
       }),
     ),
     GetPage(
       name: AppRoutes.createBill,
       page: () => const CreateBillView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => BillController(), fenix: true);
+      }),
     ),
     GetPage(
       name: AppRoutes.billDetail,
       page: () => const BillDetailView(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut(() => GroupDetailController(), fenix: true);
+        Get.lazyPut(() => BillController(), fenix: true);
+      }),
     ),
     GetPage(
       name: AppRoutes.profile,
