@@ -8,53 +8,51 @@ import 'package:splitmate/controllers/auth_controller.dart';
 import 'package:splitmate/controllers/bill_controller.dart';
 
 class ChatController extends GetxController {
+  // Service dependencies
   final MessageService _messageService = MessageService();
   final AiService _aiService = AiService();
 
+  // Observable state
   final RxList<MessageModel> messages = <MessageModel>[].obs;
   final RxBool isAiTyping = false.obs;
   final RxString error = ''.obs;
-  final RxString pendingAttachmentBase64 = ''.obs;
 
+  // Auth controller accessor
   AuthController get _auth => Get.find<AuthController>();
 
+  // Current group ID from route params
   String get groupId => Get.parameters['id'] ?? '';
 
+  // Subscribe to message stream on controller init
   @override
   void onInit() {
     super.onInit();
     _watchMessages();
   }
 
+  // Listen for realtime message updates from Firestore
   void _watchMessages() {
     _messageService.watchMessages(groupId).listen((msgs) {
       messages.value = msgs;
     });
   }
 
+  // Send user message then get and post AI response
   Future<void> sendMessage(String text, GroupModel group) async {
-    if (text.trim().isEmpty && pendingAttachmentBase64.value.isEmpty) return;
+    if (text.trim().isEmpty) return;
 
-    final attachment = pendingAttachmentBase64.value.isEmpty
-        ? null
-        : pendingAttachmentBase64.value;
-    pendingAttachmentBase64.value = '';
-
-    // Save user message to Firestore
     await _messageService.sendMessage(
       groupId: groupId,
       userId: _auth.userId,
       userName: _auth.userName,
       role: 'user',
       content: text,
-      attachmentBase64: attachment,
     );
 
     isAiTyping.value = true;
     error.value = '';
 
     try {
-      // Build conversation history for Claude (last 20 messages, text only)
       final history = messages
           .where((m) => m.billDraft == null)
           .take(20)
@@ -64,13 +62,12 @@ class ChatController extends GetxController {
       final result = await _aiService.sendMessage(
         groupId: groupId,
         userId: _auth.userId,
+        currentUserName: _auth.userName,
         group: group,
         conversationHistory: history,
         userMessage: text,
-        attachmentBase64: attachment,
       );
 
-      // Save assistant response to Firestore
       await _messageService.sendMessage(
         groupId: groupId,
         userId: 'assistant',
@@ -93,6 +90,7 @@ class ChatController extends GetxController {
     }
   }
 
+  // Save AI bill draft to Firestore and notify chat
   Future<void> confirmBillDraft(BillDraft draft) async {
     final billCtrl = Get.find<BillController>();
     try {

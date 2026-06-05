@@ -92,8 +92,8 @@ class _LoginViewState extends State<LoginView>
                         fontWeight: FontWeight.w600, fontSize: 14),
                     dividerColor: Colors.transparent,
                     tabs: const [
-                      Tab(text: 'Sign Up'),
                       Tab(text: 'Log In'),
+                      Tab(text: 'Sign Up'),
                     ],
                   ),
                 ),
@@ -105,8 +105,8 @@ class _LoginViewState extends State<LoginView>
                   child: TabBarView(
                     controller: _tabCtrl,
                     children: const [
-                      _SignUpForm(),
                       _LoginForm(),
+                      _SignUpForm(),
                     ],
                   ),
                 ),
@@ -140,6 +140,7 @@ class _SignUpFormState extends State<_SignUpForm> {
 
   final AuthController _auth = Get.find<AuthController>();
 
+  // Pick and compress DuitNow QR image from gallery
   Future<void> _pickQr() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
@@ -163,6 +164,7 @@ class _SignUpFormState extends State<_SignUpForm> {
     }
   }
 
+  // Validate sign-up form and submit to auth controller
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_qrBase64 == null) {
@@ -313,6 +315,7 @@ class _LoginFormState extends State<_LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final AuthController _auth = Get.find<AuthController>();
 
+  // Validate login form and call sign-in
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     _auth.signIn(phone: _phoneCtrl.text.trim());
@@ -375,7 +378,7 @@ class _LoginFormState extends State<_LoginForm> {
           const SizedBox(height: 20),
           Center(
             child: Text(
-              'Don\'t have an account? Switch to the Sign Up tab.',
+              'Tiada akaun? Pilih tab Sign Up di atas.',
               style: TextStyle(fontSize: 12, color: AppColors.textHint),
               textAlign: TextAlign.center,
             ),

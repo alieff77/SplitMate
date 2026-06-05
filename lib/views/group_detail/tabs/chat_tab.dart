@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:splitmate/controllers/auth_controller.dart';
 import 'package:splitmate/controllers/bill_controller.dart';
 import 'package:splitmate/controllers/chat_controller.dart';
 import 'package:splitmate/controllers/group_detail_controller.dart';
 import 'package:splitmate/core/constants/app_colors.dart';
-import 'package:splitmate/core/utils/image_utils.dart';
 import 'package:splitmate/widgets/bill_draft_card.dart';
 import 'package:splitmate/widgets/chat_message_widget.dart';
 
@@ -28,28 +26,44 @@ class _ChatTabState extends State<ChatTab> {
   @override
   void initState() {
     super.initState();
+    // Scroll to bottom whenever new messages arrive
     _chat.messages.listen((_) => _scrollToBottom());
-    // Anti-drama: warn about old unpaid bills
+    // Also scroll on first open (messages may already be loaded)
+    Future.delayed(const Duration(milliseconds: 400), _jumpToBottom);
+    // Show old-bill warning at the top so it doesn't block the input bar
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkOldBills());
   }
 
+  // Show snackbar warning if group has unpaid bills older than 7 days
   void _checkOldBills() {
     if (_groupCtrl.hasOldUnpaidBills) {
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  '⚠️ You have unpaid bills older than 7 days. Check the Bills tab!'),
-              backgroundColor: AppColors.pending,
-              duration: Duration(seconds: 5),
-            ),
+          Get.snackbar(
+            '⚠️ Ada hutang lama',
+            'Kau ada unpaid bills lebih dari 7 hari. Check Bills tab!',
+            backgroundColor: AppColors.pending,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 5),
+            snackPosition: SnackPosition.TOP,
+            margin: const EdgeInsets.all(8),
           );
         }
       });
     }
   }
 
+  /// Instant jump — used when opening chat so user lands at latest message.
+  void _jumpToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollCtrl.hasClients &&
+          _scrollCtrl.position.maxScrollExtent > 0) {
+        _scrollCtrl.jumpTo(_scrollCtrl.position.maxScrollExtent);
+      }
+    });
+  }
+
+  /// Animated scroll — used when a new message is added during a session.
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollCtrl.hasClients) {
@@ -62,30 +76,14 @@ class _ChatTabState extends State<ChatTab> {
     });
   }
 
+  // Send message from input field and clear it
   void _send() {
     final text = _msgCtrl.text.trim();
-    if (text.isEmpty && _chat.pendingAttachmentBase64.value.isEmpty) return;
+    if (text.isEmpty) return;
     final group = _groupCtrl.group.value;
     if (group == null) return;
     _msgCtrl.clear();
     _chat.sendMessage(text, group);
-  }
-
-  Future<void> _attachImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked == null) return;
-    try {
-      final base64 = await ImageUtils.compressAndEncode(picked);
-      _chat.pendingAttachmentBase64.value = base64;
-      Get.snackbar('Image attached',
-          'Describe it in the text box, then send.',
-          backgroundColor: AppColors.successLight,
-          colorText: AppColors.success,
-          duration: const Duration(seconds: 2));
-    } catch (e) {
-      Get.snackbar('Error', e.toString());
-    }
   }
 
   @override
@@ -128,8 +126,8 @@ class _ChatTabState extends State<ChatTab> {
                         memberNames:
                             _groupCtrl.group.value?.memberNames ?? {},
                         isLoading: _billCtrl.isSubmitting.value,
-                        onConfirm: () =>
-                            _chat.confirmBillDraft(msg.billDraft!),
+                        onConfirm: (editedDraft) =>
+                            _chat.confirmBillDraft(editedDraft),
                         onDiscard: () {},
                       ));
                 }
@@ -144,34 +142,6 @@ class _ChatTabState extends State<ChatTab> {
           }),
         ),
 
-        // Attachment preview
-        Obx(() {
-          if (_chat.pendingAttachmentBase64.value.isEmpty) {
-            return const SizedBox.shrink();
-          }
-          return Container(
-            color: AppColors.successLight,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const Icon(Icons.image, color: AppColors.success, size: 18),
-                const SizedBox(width: 8),
-                const Expanded(
-                    child: Text('Image attached',
-                        style: TextStyle(
-                            fontSize: 13, color: AppColors.success))),
-                IconButton(
-                  icon: const Icon(Icons.close,
-                      size: 18, color: AppColors.success),
-                  onPressed: () =>
-                      _chat.pendingAttachmentBase64.value = '',
-                ),
-              ],
-            ),
-          );
-        }),
-
         // Input bar
         Container(
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
@@ -183,12 +153,6 @@ class _ChatTabState extends State<ChatTab> {
             top: false,
             child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.image_outlined,
-                      color: AppColors.textSecondary),
-                  onPressed: _attachImage,
-                  tooltip: 'Attach receipt',
-                ),
                 Expanded(
                   child: TextField(
                     controller: _msgCtrl,

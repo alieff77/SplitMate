@@ -19,8 +19,9 @@ dependencies:
   # State management (MVC)
   get: ^4.7.2
 
-  # Networking (Anthropic AI API)
+  # Networking
   http: ^1.3.0
+
 
   # Local storage
   shared_preferences: ^2.5.3
@@ -28,6 +29,9 @@ dependencies:
   # Image handling
   image_picker: ^1.1.2
   flutter_image_compress: ^2.3.0
+
+  # OCR — offline on-device receipt scanning (Android/iOS only)
+  google_mlkit_text_recognition: ^0.13.1
 
   # Utilities
   intl: ^0.20.2

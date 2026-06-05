@@ -8,16 +8,24 @@ import 'firebase_options.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: '.env');
+  // Load environment variables from .env file
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (_) {
+    // .env is optional — no API keys required
+  }
 
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Lock orientation to portrait only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
+  // Launch app
   runApp(const SplitMateApp());
 }
